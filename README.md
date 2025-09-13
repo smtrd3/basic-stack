@@ -6,14 +6,19 @@ Built with React, Tailwind CSS, Express, and Bun — optimized for fast iteratio
 ## Some useful utilities are also included, such as:
 
 `dotenv` -> for secrets management
+
 `mutative` -> makes state updates look cleaner and more expressive (immutability without boilerplate)
+
 `shortid` -> quick, user-friendly unique ID generation for cases like keys, URLs, or temporary identifiers
 
 ## Phylosophy:
 
 ⚡ Fast iterations (no typescript bloat)
+
 🪶 Minimal tooling and dependencies (no lint/test)
+
 🛠️ Long term stability
+
 🌉 Sits between "PHP + jQuery" and "Next.js"
 
 ## Project Structure:
@@ -24,5 +29,7 @@ Built with React, Tailwind CSS, Express, and Bun — optimized for fast iteratio
 ## Commands
 
 `bun run dev` -> start the dev server
+
 `bun run build` -> build the front-end
+
 `bun run start` -> start the project in production mode
