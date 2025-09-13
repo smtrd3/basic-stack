@@ -24,6 +24,7 @@ Built with React, Tailwind CSS, Express, and Bun — optimized for fast iteratio
 ## Project Structure:
 
 `src/server/routes.js` → export your backend routes here
+
 `src/App.jsx` → frontend root component
 
 ## Commands
