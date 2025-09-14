@@ -21,6 +21,17 @@ Built with React, Tailwind CSS, Express, and Bun — optimized for fast iteratio
 
 🌉 Sits between "PHP + jQuery" and "Next.js"
 
+## Setup
+
+Create .env file with following information then run one of the command shown below
+
+```
+PORT=3000
+API_PREFIX = /api
+# front-end secrets (read from import.meta.env)
+VITE_TEST=test
+```
+
 ## Project Structure:
 
 `src/server/routes.js` → export your backend routes here
