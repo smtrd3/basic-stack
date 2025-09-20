@@ -7,6 +7,8 @@ Built with React, Tailwind CSS, Express, and Bun — optimized for fast iteratio
 
 `dotenv` -> for secrets management
 
+`wouter` -> for lightweigt and context free routing solution
+
 `mutative` -> makes state updates look cleaner and more expressive (immutability without boilerplate)
 
 `shortid` -> quick, user-friendly unique ID generation for cases like keys, URLs, or temporary identifiers
