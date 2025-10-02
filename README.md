@@ -4,7 +4,7 @@ Minimal yet modern full-stack boilerplate with hot reloading on both ends. React
 
 ## Some useful utilities are also included, such as:
 
-`dotenv` -> for secrets management. Note: on frontend `process.env` is not supported however if you prefix your env vars with VITE\_ then they would can be used across frontend and backend using native vite integration i.e. `import.meta.env` object.
+`dotenv` -> for secrets management. Note: on frontend `process.env` is not supported however if you prefix your env vars with `VITE_` then they can be used across frontend and backend using native vite integration i.e. `import.meta.env` object.
 
 `wouter` -> for lightweigt and context free routing solution
 
