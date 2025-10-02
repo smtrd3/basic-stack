@@ -1,17 +1,17 @@
 {
   "name": "mini-stack",
-  "description": "Very minimal web stack with HMR for both frontend and backend",
+  "description": "Super basic vite based fullstack template with HMR",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "dev": "NODE_ENV=development bun server.js",
-    "start": "NODE_ENV=production node server.js"
+    "dev": "bun --bun vite",
+    "build": "bun --bun vite build --app",
+    "start": "bun run build && bun --bun ./dist/server-entry.js"
   },
   "dependencies": {
     "dotenv": "^17.2.2",
-    "express": "^5.1.0",
+    "hono": "^4.9.9",
     "mutative": "^1.2.0",
     "nanoid": "^5.1.5",
     "react": "^19.1.1",
@@ -20,11 +20,11 @@
     "wouter": "^3.7.1"
   },
   "devDependencies": {
+    "srvx": "^0.8.9",
     "@tailwindcss/vite": "^4.1.13",
     "@vitejs/plugin-react": "^5.0.0",
-    "chokidar": "^4.0.3",
     "tailwindcss": "^4.1.13",
-    "vite": "^7.1.2"
+    "vite": "npm:rolldown-vite@latest"
   },
   "packageManager": "bun@1.2.0"
 }
