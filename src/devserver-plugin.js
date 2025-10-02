@@ -66,10 +66,12 @@ export function devServer() {
               outDir: OUTPUT_ROOT,
               minify: false,
               rolldownOptions: {
-                externals: [],
-                input: SERVER_ENTRY,
+                input: {
+                  index: SERVER_ENTRY,
+                },
                 output: {
                   format: "esm",
+                  entryFileNames: "[name].js", // will output index.js
                 },
               },
             },

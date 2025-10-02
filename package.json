@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "bun --bun vite",
     "build": "bun --bun vite build --app",
-    "start": "bun run build && bun --bun ./dist/server-entry.js"
+    "start": "bun run build && bun --bun ./dist"
   },
   "dependencies": {
     "dotenv": "^17.2.2",
