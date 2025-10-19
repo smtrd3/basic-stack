@@ -60,15 +60,15 @@ export function devServer() {
 				},
 				environments: {
 					server: {
-						resolve: {
-							noExternal: true,
-						},
 						build: {
 							// assetsDir: 'assets', -> default is good enough
 							target: "node",
 							copyPublicDir: false,
 							outDir: OUTPUT_ROOT,
 							minify: false,
+							commonjsOptions: {
+								include: [/node_modules/],
+							},
 							rolldownOptions: {
 								input: {
 									index: SERVER_ENTRY,
