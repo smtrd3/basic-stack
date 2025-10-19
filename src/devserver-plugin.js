@@ -104,17 +104,11 @@ export function devServer() {
 					const webReq = new NodeRequest({ req, res });
 
 					try {
-						const honoApp = (await serverEnv.runner.import(SERVER_ENTRY))
+						const serverApp = (await serverEnv.runner.import(SERVER_ENTRY))
 							.default;
-						const matchResult = honoApp.router
-							.match(req.method || "GET", url)
-							.at(0);
+						const serverRes = await serverApp.fetch(webReq);
 
-						if ((matchResult?.length || 0) > 0) {
-							const webRes = await honoApp.fetch(webReq);
-							return sendNodeResponse(res, webRes);
-						} else {
-							// return HTML if there is no matching api route
+						if (serverRes.status === 404) {
 							return sendNodeResponse(
 								res,
 								new Response(template, {
@@ -122,6 +116,8 @@ export function devServer() {
 									headers: { "Content-Type": "text/html" },
 								}),
 							);
+						} else {
+							return sendNodeResponse(res, serverRes);
 						}
 					} catch (ex) {
 						console.error(ex);
