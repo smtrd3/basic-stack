@@ -2,6 +2,15 @@
 
 Minimal yet modern full-stack boilerplate with hot reloading on both ends. React + Tailwind frontend, Hono backend, powered by superfast Vite 7 (rolldown version). Perfect for rapid prototyping and hobby projects.
 
+## Quick Start
+
+```sh
+bunx degit smtrd3/basic-stack my-app
+cd my-app
+bun install
+bun run dev
+```
+
 ## Philosophy
 
 - **Fast iterations** — optional TypeScript, relaxed rules
