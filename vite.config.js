@@ -28,6 +28,14 @@ const PATHS = {
 // - Static file serving for the SPA
 // - HMR acceptance for dev mode
 //
+// How the server runs:
+// Your server-entry.js exports { fetch, port }. Bun has a convention where
+// if a module's default export has these properties, it automatically starts
+// an HTTP server — no explicit serve() call needed.
+//
+// Example: export default { fetch: app.fetch, port: 3000 }
+// When you run `bun ./dist/index.js`, Bun sees this and serves on port 3000.
+//
 // Customize: Add middleware, logging, or other server setup here
 const SERVER_INJECTED_CODE = `
 ${import.meta.env.NODE_ENV === 'development' ? '' : `import "dotenv/config";`}
@@ -82,6 +90,13 @@ const buildAppExcludingSSR = async (builder) => {
 // 1. Transform index.html (injects HMR client, React refresh, etc.)
 // 2. Try server routes first
 // 3. If 404, serve the SPA shell (client-side routing)
+//
+// Request conversion (Connect → Fetch API):
+// Vite's dev server uses Connect-style middleware (req: IncomingMessage, res: ServerResponse).
+// But Hono uses the Fetch API (Request → Response). We bridge them using srvx:
+// - NodeRequest: Wraps Node's (req, res) into a Web API Request object
+// - sendNodeResponse: Converts a Web API Response back to Node's res.end()
+// This lets us use the same Hono server code in both dev (Vite/Node) and prod (Bun).
 //
 // Customize: Add request logging, auth checks, or custom headers here
 
