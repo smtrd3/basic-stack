@@ -4,19 +4,27 @@ Minimal yet modern full-stack boilerplate with hot reloading on both ends. React
 
 ## Philosophy
 
-- **Fast iterations** — no TypeScript bloat
+- **Fast iterations** — optional TypeScript, relaxed rules
 - **Minimal tooling** — no lint/test overhead
 - **Long term stability** — standard based approach
 - **Low complexity** — no SSR, just SPA + API
 
 ## Included Utilities
 
-| Package | Purpose |
-|---------|---------|
-| `dotenv` | Secrets management. Frontend uses `import.meta.env` with `VITE_` prefix |
-| `wouter` | Lightweight, context-free routing |
-| `mutative` | Clean immutable state updates without boilerplate |
-| `nanoid` | Fast unique ID generation for keys, URLs, identifiers |
+| Package    | Purpose                                                                 |
+| ---------- | ----------------------------------------------------------------------- |
+| `dotenv`   | Secrets management. Frontend uses `import.meta.env` with `VITE_` prefix |
+| `wouter`   | Lightweight, context-free routing                                       |
+| `mutative` | Clean immutable state updates without boilerplate                       |
+| `nanoid`   | Fast unique ID generation for keys, URLs, identifiers                   |
+
+## TypeScript (Optional)
+
+TypeScript is pre-configured with relaxed rules. Mix `.js` and `.ts` files freely:
+
+- Rename any file to `.ts`/`.tsx` to enable type checking for that file
+- No strict mode, no implicit any errors — types are helpers, not constraints
+- Run `bun run typecheck` to check types manually
 
 ## Setup
 
