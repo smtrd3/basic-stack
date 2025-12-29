@@ -1,13 +1,15 @@
 {
   "name": "mini-stack",
-  "description": "Super basic vite based fullstack template with HMR",
   "version": "0.0.0",
   "private": true,
+  "description": "Super basic vite based fullstack template with HMR",
   "type": "module",
   "scripts": {
     "dev": "bun --bun vite",
     "build": "bun --bun vite build --app",
-    "start": "bun run build && bun --bun ./dist"
+    "start": "bun run build && bun --bun ./dist",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
   },
   "dependencies": {
     "dotenv": "^17.2.2",
@@ -20,9 +22,10 @@
     "wouter": "^3.7.1"
   },
   "devDependencies": {
-    "srvx": "^0.8.9",
     "@tailwindcss/vite": "^4.1.13",
     "@vitejs/plugin-react": "^5.0.0",
+    "oxfmt": "^0.20.0",
+    "srvx": "^0.8.9",
     "tailwindcss": "^4.1.13",
     "vite": "npm:rolldown-vite@latest"
   },

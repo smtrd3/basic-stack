@@ -1,0 +1,8 @@
+{
+  "printWidth": 100,
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "ignorePatterns": ["dist/", "node_modules/", ".git/", "bun.lock"]
+}

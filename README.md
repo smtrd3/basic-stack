@@ -1,39 +1,36 @@
 # Basic Stack
 
-Minimal yet modern full-stack boilerplate with hot reloading on both ends. React + Tailwind frontend, Hono backend, powered by superfast vite 7 (rolldown version). Perfect for rapid prototyping and hobby projects.
+Minimal yet modern full-stack boilerplate with hot reloading on both ends. React + Tailwind frontend, Hono backend, powered by superfast Vite 7 (rolldown version). Perfect for rapid prototyping and hobby projects.
 
-## Some useful utilities are also included, such as:
+## Philosophy
 
-`dotenv` -> for secrets management. Note: on frontend `process.env` is not supported however if you prefix your env vars with `VITE_` then they can be used across frontend and backend using native vite integration i.e. `import.meta.env` object.
+- **Fast iterations** — no TypeScript bloat
+- **Minimal tooling** — no lint/test overhead
+- **Long term stability** — standard based approach
+- **Low complexity** — no SSR, just SPA + API
 
-`wouter` -> for lightweigt and context free routing solution
+## Included Utilities
 
-`mutative` -> makes state updates look cleaner and more expressive (immutability without boilerplate)
-
-`nanoid` -> quick, user-friendly unique ID generation for cases like keys, URLs, or temporary identifiers
-
-## Phylosophy:
-
-⚡ Fast iterations (no typescript bloat)
-
-🪶 Minimal tooling and dependencies (no lint/test)
-
-🛠️ Long term stability
-
-🌉 Standard based and low complexity (no SSR)
+| Package | Purpose |
+|---------|---------|
+| `dotenv` | Secrets management. Frontend uses `import.meta.env` with `VITE_` prefix |
+| `wouter` | Lightweight, context-free routing |
+| `mutative` | Clean immutable state updates without boilerplate |
+| `nanoid` | Fast unique ID generation for keys, URLs, identifiers |
 
 ## Setup
 
-Create .env file with following information then run one of the command shown below
+Create a `.env` file:
 
-```
+```sh
 PORT=3000
 ```
 
 ## Commands
 
-`bun run dev` -> start the dev server
-
-`bun run build` -> build the app
-
-`bun run start` -> builds and runs the project in production mode
+```sh
+bun run dev      # Start dev server with HMR
+bun run build    # Build for production
+bun run start    # Build and run in production mode
+bun run format   # Format all files
+```

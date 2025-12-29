@@ -1,20 +1,12 @@
-import { Hono } from "hono";
-const app = new Hono();
+import { Hono } from 'hono'
 
-app.get("/api/health-check", async (c) => {
-  await new Promise((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, 2000);
-  });
+const app = new Hono()
 
-  return c.json({
-    status: "Live",
-  });
-});
+app.get('/api/time', (c) => {
+  return c.json({ time: new Date().toISOString() })
+})
 
 export default {
   fetch: app.fetch,
-  router: app.router,
   port: process.env.PORT || 3000,
-};
+}

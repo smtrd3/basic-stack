@@ -1,100 +1,64 @@
-import { useEffect } from "react";
-import { useMutative } from "use-mutative";
-import { Route, Switch, Link } from "wouter";
+import { useEffect } from 'react'
+import { useMutative } from 'use-mutative'
 
 function App() {
-  const [state, update] = useMutative({ loading: true, status: "unknown" });
+  const [state, update] = useMutative({ loading: true, time: null })
 
   useEffect(() => {
-    update((s) => {
-      s.loading = true;
-    });
-
-    fetch("/api/health-check").then(async (res) => {
-      update((s) => {
-        s.loading = false;
-      });
-
-      const data = await res.json();
-
-      update((s) => {
-        s.status = data.status;
-      });
-    });
-  }, []);
+    fetch('/api/time')
+      .then((res) => res.json())
+      .then((data) => update((s) => { s.loading = false; s.time = data.time }))
+      .catch(() => update((s) => { s.loading = false }))
+  }, [])
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <nav className="fixed top-0 w-full bg-black border-b border-white/20">
-        <div className="p-2">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold tracking-tighter font-sans">Basic-stack</h1>
-            <div className="flex gap-8">
-              <Link
-                href="/"
-                className={(active) => (active ? "text-white" : "text-white hover:text-white transition-colors")}
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/about"
-                className={(active) => (active ? "text-white" : "text-white hover:text-white transition-colors")}
-              >
-                About
-              </Link>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center p-8">
+      <div className="max-w-lg w-full space-y-12">
+        <header>
+          <h1 className="text-3xl font-semibold tracking-tight">Basic Stack</h1>
+          <p className="text-zinc-500 mt-2">
+            Minimal full-stack boilerplate with HMR on both ends
+          </p>
+        </header>
+
+        <section className="space-y-4">
+          <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
+            API Example
+          </h2>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 font-mono text-sm">
+            <div className="text-zinc-500">GET /api/time</div>
+            <div className="mt-2">
+              {state.loading ? (
+                <span className="text-zinc-600">Loading...</span>
+              ) : state.time ? (
+                <span className="text-emerald-400">{state.time}</span>
+              ) : (
+                <span className="text-red-400">Failed to fetch</span>
+              )}
             </div>
           </div>
-        </div>
-      </nav>
+        </section>
 
-      <main className="container mx-auto px-8 py-32">
-        <div className="mb-12">
-          <div className="inline-flex items-center gap-3">
-            <div className={`w-2 h-2 rounded-full ${state.loading ? "bg-white/30" : "bg-lime-500"}`}></div>
-            <span className="text-sm ">
-              Backend status: {state.loading ? "Checking..." : <b className="text-lime-500">{state.status}</b>}
-            </span>
+        <section className="space-y-4">
+          <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">Stack</h2>
+          <div className="flex flex-wrap gap-2">
+            {['React', 'Hono', 'Tailwind', 'Vite', 'Bun'].map((tech) => (
+              <span
+                key={tech}
+                className="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-sm text-zinc-300"
+              >
+                {tech}
+              </span>
+            ))}
           </div>
-        </div>
+        </section>
 
-        <Switch>
-          <Route
-            path="/"
-            component={() => (
-              <div className="space-y-16">
-                <div>
-                  <h2 className="text-2xl font-medium mb-4">Welcome</h2>
-                  <p className="text-white/60 max-w-2xl">
-                    This is a minimal monochrome dashboard showcasing routing and API integration.
-                  </p>
-                </div>
-              </div>
-            )}
-          />
-
-          <Route
-            path="/about"
-            component={() => (
-              <div className="max-w-2xl">
-                <h2 className="text-2xl font-medium mb-8">About</h2>
-                <p className="text-white/60">
-                  A minimal full-stack setup with hot reloading for both frontend and backend. Opinionated, built with
-                  React, Tailwind CSS, Hono, and Bun — optimized for fast iteration and simple hobby projects.
-                </p>
-                <h3 className="my-1 underline">Composition:</h3>
-                <ul className="list-disc block pl-6">
-                  <li>React</li>
-                  <li>Hono</li>
-                  <li>Tailwind</li>
-                  <li>Vite (rolldown)</li>
-                </ul>
-              </div>
-            )}
-          />
-        </Switch>
-      </main>
+        <footer className="text-zinc-600 text-sm">
+          Edit <code className="text-zinc-400">src/App.jsx</code> to get started
+        </footer>
+      </div>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
