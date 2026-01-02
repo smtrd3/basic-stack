@@ -157,6 +157,11 @@ function devServer() {
 // - devServer(): Our custom full-stack dev server
 export default defineConfig({
   plugins: [react(), tailwindcss(), devServer()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   server: {
     port: process.env.PORT, // Set in .env or defaults to 5173
   },
