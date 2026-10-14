@@ -1,168 +1,159 @@
 import "dotenv/config";
+import fs from "node:fs/promises";
+import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { NodeRequest, sendNodeResponse } from "srvx/node";
-import { mergeConfig } from "vite";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// ─── Project layout ─────────────────────────────────────────────────────────
 
-// ============================================================================
-// PATHS - Customize these to change project structure
-// ============================================================================
+const root = import.meta.dirname;
+
 const PATHS = {
-  html: path.resolve(__dirname, "./index.html"),
-  serverEntry: path.join(__dirname, "./src/server-entry.js"), // Your Hono app
-  outputRoot: path.join(__dirname, "./dist"), // Server bundle output
-  clientOutput: path.join(__dirname, "./dist/static"), // Client assets output
+  html: path.join(root, "index.html"),
+  serverEntry: path.join(root, "src/server-entry.js"), // Your Hono app
+  serverOutput: path.join(root, "dist"), // dist/index.js
+  clientOutput: path.join(root, "dist/static"),
 };
 
-// ============================================================================
-// SERVER CODE INJECTION - Code appended to server-entry.js at build time
-// ============================================================================
-// This template wraps your server code with:
-// - dotenv loading in production
-// - Static file serving for the SPA
-// - HMR acceptance for dev mode
-//
-// How the server runs:
-// Your server-entry.js exports { fetch, port }. Bun has a convention where
-// if a module's default export has these properties, it automatically starts
-// an HTTP server — no explicit serve() call needed.
-//
-// Example: export default { fetch: app.fetch, port: 3000 }
-// When you run `bun ./dist/index.js`, Bun sees this and serves on port 3000.
-//
-// Customize: Add middleware, logging, or other server setup here
-const SERVER_INJECTED_CODE = `
-${import.meta.env.NODE_ENV === "development" ? "" : `import "dotenv/config";`}
-import { resolve } from "node:path";
-import { serveStatic } from "hono/bun";
+// Virtual module that wraps your server entry for production
+const PROD_ENTRY_ID = "virtual:basic-stack/server";
+const RESOLVED_PROD_ENTRY_ID = `\0${PROD_ENTRY_ID}`;
 
-__CODE__
+// ─── Vite config ────────────────────────────────────────────────────────────
 
-// Production static file serving - serves client build + SPA fallback
-if (import.meta.env.PROD) {
-  const staticConfig = { root: resolve(__dirname, "./static") };
-  app.get("/*", serveStatic(staticConfig));
-  app.get("/*", serveStatic({ ...staticConfig, path: "index.html" })); // SPA fallback
-}
-
-// HMR support for server code
-if (import.meta.hot) {
-  import.meta.hot.accept();
-}
-`;
-
-// ============================================================================
-// SERVER BUILD CONFIG - Customize Node/Bun server bundling
-// ============================================================================
-const serverBuildConfig = {
-  build: {
-    target: "node", // Change to 'bun' if using Bun-specific APIs
-    copyPublicDir: false,
-    outDir: PATHS.outputRoot,
-    minify: false, // Set true for smaller production bundles
-    commonjsOptions: { include: [/node_modules/] },
-    rolldownOptions: {
-      input: { index: PATHS.serverEntry },
-      output: {
-        format: "esm",
-        entryFileNames: "[name].js", // Output: dist/index.js
-      },
-    },
+export default defineConfig({
+  plugins: [react(), tailwindcss(), fullStack()],
+  resolve: {
+    alias: { "@": path.join(root, "src") },
   },
-};
+  server: {
+    host: true, // Listen on all interfaces, reachable from your network
+    port: process.env.PORT, // From .env, defaults to 5173
+  },
+});
 
-// Builds all environments except SSR (we handle server separately)
-const buildAppExcludingSSR = async (builder) => {
-  const environments = Object.values(builder.environments).filter((env) => env.name !== "ssr");
-  await Promise.all(environments.map((env) => builder.build(env)));
-};
+// ─── Full-stack plugin ──────────────────────────────────────────────────────
+// Runs your Hono server next to the React SPA, in dev and in the production build.
 
-// ============================================================================
-// DEV MIDDLEWARE - Handles requests during development
-// ============================================================================
-// Request flow:
-// 1. Transform index.html (injects HMR client, React refresh, etc.)
-// 2. Try server routes first
-// 3. If 404, serve the SPA shell (client-side routing)
-//
-// Request conversion (Connect → Fetch API):
-// Vite's dev server uses Connect-style middleware (req: IncomingMessage, res: ServerResponse).
-// But Hono uses the Fetch API (Request → Response). We bridge them using srvx:
-// - NodeRequest: Wraps Node's (req, res) into a Web API Request object
-// - sendNodeResponse: Converts a Web API Response back to Node's res.end()
-// This lets us use the same Hono server code in both dev (Vite/Node) and prod (Bun).
-//
-// Customize: Add request logging, auth checks, or custom headers here
-
-const htmlResponse = (template) =>
-  new Response(template, {
-    status: 200,
-    headers: { "Content-Type": "text/html" },
-  });
-
-const createDevMiddleware = (server) => async (req, res) => {
-  if (req.originalUrl) req.url = req.originalUrl;
-
-  const template = await server.transformIndexHtml(req.url, fs.readFileSync(PATHS.html, "utf-8"));
-
-  try {
-    const serverApp = (await server.environments.server.runner.import(PATHS.serverEntry)).default;
-    const serverRes = await serverApp.fetch(new NodeRequest({ req, res }));
-
-    // API routes return their response, everything else gets the SPA
-    const response = serverRes.status === 404 ? htmlResponse(template) : serverRes;
-    return sendNodeResponse(res, response);
-  } catch (err) {
-    console.error(err);
-    server.ssrFixStacktrace?.(err);
-  }
-};
-
-// ============================================================================
-// VITE PLUGIN - Ties everything together
-// ============================================================================
-function devServer() {
+function fullStack() {
   return {
     name: "BasicStackDevServer",
 
-    // Injects production code into server entry
-    transform: (code, id) =>
-      id.endsWith(PATHS.serverEntry) ? SERVER_INJECTED_CODE.replace("__CODE__", code) : code,
+    config: (_config, { command }) => ({
+      appType: "custom", // index.html is served by our middleware, not Vite's SPA fallback
+      build: { outDir: PATHS.clientOutput },
+      builder: { buildApp: buildClientAndServer },
+      environments: { server: serverEnvironment(command) },
+    }),
 
-    // Merges our config with user's vite config
-    config: (config) =>
-      mergeConfig(config, {
-        build: { outDir: PATHS.clientOutput },
-        builder: { buildApp: buildAppExcludingSSR },
-        environments: { server: serverBuildConfig },
-      }),
+    // Returning a function registers the middleware after Vite's own
+    configureServer: (server) => () => server.middlewares.use(devMiddleware(server)),
 
-    // Registers dev middleware (returned fn runs after Vite's built-in middleware)
-    configureServer: (server) => () => server.middlewares.use(createDevMiddleware(server)),
+    resolveId: (id) => (id === PROD_ENTRY_ID ? RESOLVED_PROD_ENTRY_ID : undefined),
+    load: (id) => (id === RESOLVED_PROD_ENTRY_ID ? prodEntryCode(PATHS.serverEntry) : undefined),
   };
 }
 
-// ============================================================================
-// MAIN CONFIG
-// ============================================================================
-// Add/remove plugins here:
-// - react(): React Fast Refresh + JSX transform
-// - tailwindcss(): Tailwind CSS JIT compilation
-// - devServer(): Our custom full-stack dev server
-export default defineConfig({
-  plugins: [react(), tailwindcss(), devServer()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+// ─── Request routing (dev and prod) ─────────────────────────────────────────
+// 1. Your server routes  2. Static files  3. index.html for page navigations.
+// Other 404s (API calls, missing assets) are returned unchanged.
+
+function isPageRequest(req) {
+  const isRead = req.method === "GET" || req.method === "HEAD";
+  return isRead && (req.headers.get("accept") ?? "").includes("text/html");
+}
+
+// ─── Development ────────────────────────────────────────────────────────────
+// Vite has already served modules and public files by the time we get here.
+// srvx bridges Node's (req, res) to the Fetch API Request/Response Hono expects.
+
+function devMiddleware(vite) {
+  return async (req, res, next) => {
+    try {
+      const { default: app } = await vite.environments.server.runner.import(PATHS.serverEntry);
+      const request = new NodeRequest({ req, res });
+      let response = await app.fetch(request);
+
+      if (response.status === 404 && isPageRequest(request)) {
+        response = await indexHtmlResponse(vite, req.url);
+      }
+      await sendNodeResponse(res, response);
+    } catch (err) {
+      next(err); // Vite logs it and renders its error page
+    }
+  };
+}
+
+// index.html with the HMR client and React refresh injected
+async function indexHtmlResponse(vite, url) {
+  const template = await fs.readFile(PATHS.html, "utf-8");
+  const html = await vite.transformIndexHtml(url, template);
+  return new Response(html, { status: 200, headers: { "Content-Type": "text/html" } });
+}
+
+// ─── Production build ───────────────────────────────────────────────────────
+
+function serverEnvironment(command) {
+  return {
+    resolve: {
+      // Bundle dependencies on build so dist/ runs without node_modules
+      noExternal: command === "build" ? true : [],
     },
+    build: {
+      target: "esnext", // Bun runs the latest JS
+      outDir: PATHS.serverOutput,
+      copyPublicDir: false,
+      minify: false,
+      rolldownOptions: {
+        input: { index: PROD_ENTRY_ID },
+        output: { format: "esm", entryFileNames: "[name].js" },
+      },
+    },
+  };
+}
+
+// Builds client and server in parallel, skipping Vite's default SSR environment
+async function buildClientAndServer(builder) {
+  const environments = Object.values(builder.environments).filter((env) => env.name !== "ssr");
+  await Promise.all(environments.map((env) => builder.build(env)));
+}
+
+// Production entry: imports your server and adds static files + SPA fallback.
+// Bun starts a server for any default export with a fetch(); other Bun.serve()
+// options you export (port, websocket, ...) are passed through.
+function prodEntryCode(serverEntry) {
+  return `
+import "dotenv/config";
+import { join, sep } from "node:path";
+import server from ${JSON.stringify(serverEntry)};
+
+const root = join(import.meta.dirname, "static");
+
+${isPageRequest}
+
+// A file from the client build, or undefined
+async function serveFile(pathname) {
+  try {
+    const filePath = join(root, decodeURIComponent(pathname));
+    const file = Bun.file(filePath);
+    if (filePath.startsWith(root + sep) && (await file.exists())) return new Response(file);
+  } catch {} // Malformed URI: not found
+}
+
+export default {
+  development: false,
+  ...server,
+  async fetch(req, bunServer) {
+    const res = await server.fetch(req, bunServer);
+    if (res.status !== 404 || (req.method !== "GET" && req.method !== "HEAD")) return res;
+
+    const file = await serveFile(new URL(req.url).pathname);
+    if (file) return file;
+    if (isPageRequest(req)) return (await serveFile("/index.html")) ?? res;
+    return res;
   },
-  server: {
-    port: process.env.PORT, // Set in .env or defaults to 5173
-  },
-});
+};
+`;
+}

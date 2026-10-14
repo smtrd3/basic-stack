@@ -14,9 +14,9 @@
     "strict": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
-    "baseUrl": ".",
+    "types": ["bun", "vite/client"],
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"]

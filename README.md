@@ -1,6 +1,6 @@
 # Basic Stack
 
-Minimal yet modern full-stack boilerplate with hot reloading on both ends. React + Tailwind frontend, Hono backend, powered by superfast Vite 7 (rolldown version). Perfect for rapid prototyping and hobby projects.
+Minimal yet modern full-stack boilerplate with hot reloading on both ends. React + Tailwind frontend, Hono backend, powered by superfast Vite 8 (Rolldown). Perfect for rapid prototyping and hobby projects.
 
 ## Quick Start
 
@@ -27,6 +27,46 @@ bun run dev
 | `mutative` | Clean immutable state updates without boilerplate                       |
 | `nanoid`   | Fast unique ID generation for keys, URLs, identifiers                   |
 
+## Font
+
+[Recursive](https://recursive.design) is self-hosted from `public/fonts/recursive` (variable font, SIL OFL). One font file covers every variant and style; it is split into unicode-range subsets so browsers download only what a page uses. Configured in `src/fonts.css`:
+
+| Variant     | Class                                |
+| ----------- | ------------------------------------ |
+| Sans Linear | `font-sans` (default)                |
+| Sans Casual | `font-casual`                        |
+| Mono Linear | `font-mono` (also `<code>`, `<pre>`) |
+| Mono Casual | `font-mono casual`                   |
+
+Weights `font-light` (300) to `font-extrablack` (1000), `italic` for slanted cursive forms, and `casual` / `linear` to switch any family. Fine-tune axes with arbitrary properties, e.g. `[--rec-casl:0.5]` or `[--rec-slnt:-8]`.
+
+## How It Works
+
+`vite.config.js` holds the whole full-stack integration. Your `src/server-entry.js` exports `{ fetch, port }` and is never modified. Requests go through the same steps in dev and production:
+
+1. Your server routes
+2. Static files (Vite in dev, the client build in production)
+3. On 404, page navigations get `index.html` for client-side routing. Other 404s (e.g. an API returning `c.json(..., 404)`) are passed through unchanged
+
+`bun run build` produces a self-contained `dist/` (dependencies bundled), so `bun dist/index.js` runs without `node_modules`.
+
+## Deployment (pm2)
+
+Deploys the production build to `~/.apps/<package name>` on a Linux machine and runs it under [pm2](https://pm2.keymetrics.io) (`bun add -g pm2`).
+
+```sh
+bun run deploy          # Build, deploy and start; rolls back if the new build doesn't come up
+bun run prod:status     # Process, URL, build and log summary
+bun run prod:logs       # Follow the logs (-n 100, --no-follow)
+bun run prod:cleanup    # Clear the log files
+bun run prod:start      # Also: prod:stop, prod:restart, prod:rollback
+```
+
+- `.env` and `data/` are copied on the first deploy, then belong to the deployed app (edit `~/.apps/<name>/.env`)
+- Logs are written to `~/.apps/<name>/logs/` with timestamps, in production only. Dev logs to the console
+- The previous build is kept, so `prod:rollback` switches back instantly
+- Settings: `APP_NAME`, `APPS_DIR`, `HEALTH_PATH` (env or `.env`). Run `pm2 startup` once to survive reboots
+
 ## TypeScript (Optional)
 
 TypeScript is pre-configured with relaxed rules. Mix `.js` and `.ts` files freely:
@@ -50,4 +90,5 @@ bun run dev      # Start dev server with HMR
 bun run build    # Build for production
 bun run start    # Build and run in production mode
 bun run format   # Format all files
+bun run deploy   # Deploy with pm2 (see Deployment)
 ```
