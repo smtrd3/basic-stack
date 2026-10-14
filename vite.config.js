@@ -1,5 +1,6 @@
 import "dotenv/config";
 import fs from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
@@ -21,10 +22,13 @@ const PATHS = {
 const PROD_ENTRY_ID = "virtual:basic-stack/server";
 const RESOLVED_PROD_ENTRY_ID = `\0${PROD_ENTRY_ID}`;
 
+// Opt-in features
+const PWA = false; // Installable app that works offline, see the PWA section below
+
 // ─── Vite config ────────────────────────────────────────────────────────────
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), fullStack()],
+  plugins: [react(), tailwindcss(), fullStack(), await pwa()],
   resolve: {
     alias: { "@": path.join(root, "src") },
   },
@@ -156,4 +160,73 @@ export default {
   },
 };
 `;
+}
+
+// ─── PWA (opt-in) ───────────────────────────────────────────────────────────
+// To enable, set PWA = true and install the plugin (kept out of the template by default):
+//   bun add -D vite-plugin-pwa @vite-pwa/assets-generator
+
+async function pwa() {
+  if (!PWA) return null;
+
+  const packages = ["vite-plugin-pwa", "@vite-pwa/assets-generator"];
+  requirePackages("PWA", packages);
+
+  // Imported by name at runtime, so the config bundler doesn't look for it while PWA is off
+  const { VitePWA } = await import(packages[0]);
+  const pkg = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf-8"));
+
+  const plugins = VitePWA({
+    registerType: "autoUpdate", // A new deploy takes over on the next visit
+    pwaAssets: { image: "public/appicon.svg" }, // Icons are generated from this at build time
+    manifest: {
+      name: pkg.name,
+      short_name: pkg.name,
+      description: pkg.description,
+      theme_color: "#09090b",
+      background_color: "#09090b",
+      display: "standalone",
+    },
+    workbox: {
+      globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+      navigateFallbackDenylist: [/^\/api\//], // Server routes never get the cached app shell
+      // Font subsets are cached as pages use them, rather than all up front
+      runtimeCaching: [{ urlPattern: /\/fonts\/.+\.woff2$/, handler: "CacheFirst" }],
+    },
+  });
+
+  // Client only: the server bundle needs no manifest or service worker
+  for (const plugin of plugins) plugin.applyToEnvironment = (env) => env.name === "client";
+  return plugins;
+}
+
+// ─── Opt-in packages ────────────────────────────────────────────────────────
+// Stops with install instructions when a feature is switched on without its packages
+
+function requirePackages(feature, packages) {
+  const missing = packages.filter((name) => !isInstalled(name));
+  if (!missing.length) return;
+
+  const error = new Error(
+    [
+      `${feature} is turned on in vite.config.js, but these packages are missing: ${missing.join(", ")}`,
+      "",
+      "  Install them with:",
+      `    bun add -D ${packages.join(" ")}`,
+      "",
+      `  Or turn it off with: const ${feature} = false`,
+    ].join("\n"),
+  );
+  // Printed as plain text: a stack trace would only bury the instructions
+  error[Symbol.for("nodejs.util.inspect.custom")] = () => error.message;
+  throw error;
+}
+
+function isInstalled(name) {
+  try {
+    createRequire(path.join(root, "package.json")).resolve(name);
+    return true;
+  } catch (err) {
+    return err.code !== "MODULE_NOT_FOUND"; // Other errors (e.g. ESM-only exports) mean it is there
+  }
 }

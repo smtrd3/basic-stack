@@ -40,6 +40,20 @@ bun run dev
 
 Weights `font-light` (300) to `font-extrablack` (1000), `italic` for slanted cursive forms, and `casual` / `linear` to switch any family. Fine-tune axes with arbitrary properties, e.g. `[--rec-casl:0.5]` or `[--rec-slnt:-8]`.
 
+## PWA (Optional)
+
+Off by default, so the template stays free of Workbox's ~300 packages. To make the app installable and work offline:
+
+```sh
+bun add -D vite-plugin-pwa @vite-pwa/assets-generator
+```
+
+Then set `const PWA = true` in `vite.config.js`. Icons are generated from `public/appicon.svg` at build time; name and description come from `package.json`. Adjust both in the PWA section of `vite.config.js`.
+
+- Production builds only: dev has no service worker, so hot reload is unaffected
+- New deploys take over on the next visit
+- `/api/*` requests always reach the server, never the cached app
+
 ## How It Works
 
 `vite.config.js` holds the whole full-stack integration. Your `src/server-entry.js` exports `{ fetch, port }` and is never modified. Requests go through the same steps in dev and production:
@@ -52,7 +66,13 @@ Weights `font-light` (300) to `font-extrablack` (1000), `italic` for slanted cur
 
 ## Deployment (pm2)
 
-Deploys the production build to `~/.apps/<package name>` on a Linux machine and runs it under [pm2](https://pm2.keymetrics.io) (`bun add -g pm2`).
+Deploys the production build to `~/.apps/<package name>` on a Linux machine and runs it under [pm2](https://pm2.keymetrics.io).
+
+**Prerequisites** (not installed by the script):
+
+- [Bun](https://bun.sh), which builds and runs the app
+- [Node.js](https://nodejs.org), which pm2 itself runs on
+- pm2: `bun add -g pm2`
 
 ```sh
 bun run deploy          # Build, deploy and start; rolls back if the new build doesn't come up

@@ -5,6 +5,8 @@
 //   bun run prod:<command>       start, stop, restart, rollback, status, logs, cleanup
 //
 // The deployed app keeps its own .env and data/: copied on the first deploy, never overwritten.
+//
+// Prerequisites, none installed by this script: Bun, Node.js (pm2 runs on it) and pm2.
 
 import { $ } from "bun";
 import { Database } from "bun:sqlite";
@@ -393,8 +395,15 @@ const die = (message) => {
   throw new Abort(message);
 };
 
+// Also runs it: pm2 itself needs Node.js, which can be missing even when pm2 is installed
 async function requirePm2() {
   if (!Bun.which("pm2")) die("pm2 is not installed. Install it once with: bun add -g pm2");
+
+  const check = await $`pm2 --version`.quiet().nothrow();
+  if (check.exitCode !== 0) {
+    die(`pm2 is installed but does not run. Node.js is a prerequisite of pm2 and must be installed first.
+  ${check.stderr.toString().trim().split("\n")[0]}`);
+  }
 }
 
 async function requireDeployed() {
